@@ -1,0 +1,91 @@
+body {
+    background-color: #f3f6f9;
+    color: #1f2937;
+}
+
+.card-soft {
+    border: 0;
+    border-radius: 0.9rem;
+    box-shadow: 0 0.55rem 1rem rgba(15, 23, 42, 0.08);
+}
+
+.stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.table > :not(caption) > * > * {
+    vertical-align: middle;
+}
+
+.badge.status-badge {
+    font-weight: 500;
+    padding: 0.45rem 0.65rem;
+}
+
+.bg-login {
+    background: radial-gradient(circle at top right, #bbf7d0, #f0fdf4 38%, #f8fafc 95%);
+}
+
+.login-card {
+    max-width: 480px;
+    width: 100%;
+}
+
+.login-icon {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto;
+    border-radius: 1rem;
+    background-color: #16a34a;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+}
+
+.form-doc-card {
+    border: 1px dashed #d1d5db;
+    border-radius: 0.75rem;
+    padding: 0.85rem;
+    background-color: #f9fafb;
+}
+
+.letter-sheet {
+    background-color: #fff;
+    border-radius: 0.9rem;
+    box-shadow: 0 0.55rem 1rem rgba(15, 23, 42, 0.08);
+}
+
+.letter-body {
+    line-height: 1.7;
+}
+
+@media (max-width: 767.98px) {
+    .table-responsive table {
+        min-width: 760px;
+    }
+}
+
+@media print {
+    .no-print,
+    nav,
+    .alert {
+        display: none !important;
+    }
+
+    body {
+        background-color: #fff;
+    }
+
+    .letter-sheet {
+        box-shadow: none;
+        border: 0;
+    }
+}
