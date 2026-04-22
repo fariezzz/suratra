@@ -33,6 +33,11 @@ class Resident extends Model
         return $this->hasMany(LetterRequest::class);
     }
 
+    public function letterArchives(): HasMany
+    {
+        return $this->hasMany(LetterArchive::class);
+    }
+
     public function user(): HasOne
     {
         return $this->hasOne(User::class);
