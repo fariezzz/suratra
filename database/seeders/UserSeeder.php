@@ -42,7 +42,7 @@ class UserSeeder extends Seeder
                 [
                     'name' => $resident->name,
                     'email' => sprintf('warga%02d@demo.local', $index + 1),
-                    'password' => 'password123',
+                    'password' => '12345',
                     'role' => UserRole::WARGA,
                 ]
             );
