@@ -7,39 +7,48 @@ use App\Enums\LetterType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class LetterRequest extends Model
+class LetterArchive extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'letter_request_id',
         'resident_id',
+        'archived_by',
+        'archive_number',
         'reference_number',
-        'letter_type',
-        'purpose',
-        'status',
-        'rt_notes',
-        'rw_notes',
-        'documents',
         'letter_number',
+        'letter_type',
+        'request_status',
+        'resident_nik',
+        'resident_name',
+        'purpose',
+        'documents',
         'generated_content',
         'issued_at',
+        'archived_at',
     ];
 
     protected $casts = [
-        'issued_at' => 'datetime',
         'documents' => 'array',
+        'issued_at' => 'datetime',
+        'archived_at' => 'datetime',
     ];
+
+    public function letterRequest(): BelongsTo
+    {
+        return $this->belongsTo(LetterRequest::class);
+    }
 
     public function resident(): BelongsTo
     {
         return $this->belongsTo(Resident::class);
     }
 
-    public function archive(): HasOne
+    public function archivedBy(): BelongsTo
     {
-        return $this->hasOne(LetterArchive::class);
+        return $this->belongsTo(User::class, 'archived_by');
     }
 
     public function getLetterTypeLabelAttribute(): string
@@ -49,11 +58,6 @@ class LetterRequest extends Model
 
     public function getStatusLabelAttribute(): string
     {
-        return LetterRequestStatus::tryFrom($this->status)?->label() ?? $this->status;
-    }
-
-    public function getStatusBadgeClassAttribute(): string
-    {
-        return LetterRequestStatus::tryFrom($this->status)?->badgeClass() ?? 'text-bg-secondary';
+        return LetterRequestStatus::tryFrom($this->request_status)?->label() ?? $this->request_status;
     }
 }

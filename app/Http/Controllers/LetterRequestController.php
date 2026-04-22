@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\LetterRequestStatus;
 use App\Enums\LetterType;
+use App\Models\LetterArchive;
 use App\Models\LetterRequest;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -143,6 +144,25 @@ class LetterRequestController extends Controller
             $letterRequest->letter_number = $this->generateLetterNumber();
             $letterRequest->generated_content = $this->renderGeneratedLetter($letterRequest);
             $letterRequest->save();
+
+            LetterArchive::query()->updateOrCreate(
+                ['letter_request_id' => $letterRequest->id],
+                [
+                    'resident_id' => $letterRequest->resident_id,
+                    'archived_by' => $request->user()->id,
+                    'reference_number' => $letterRequest->reference_number,
+                    'letter_number' => $letterRequest->letter_number,
+                    'letter_type' => $letterRequest->letter_type,
+                    'request_status' => $letterRequest->status,
+                    'resident_nik' => $letterRequest->resident->nik,
+                    'resident_name' => $letterRequest->resident->name,
+                    'purpose' => $letterRequest->purpose,
+                    'documents' => $letterRequest->documents,
+                    'generated_content' => $letterRequest->generated_content,
+                    'issued_at' => $letterRequest->issued_at,
+                    'archived_at' => now(),
+                ]
+            );
         } else {
             $letterRequest->update([
                 'status' => LetterRequestStatus::REJECTED_RW->value,

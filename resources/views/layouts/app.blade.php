@@ -39,6 +39,11 @@
                             <i class="bi bi-envelope-paper me-1"></i>Persuratan
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link @if (request()->routeIs('archives.*')) active @endif" href="{{ route('archives.index') }}">
+                            <i class="bi bi-archive me-1"></i>Arsip Surat
+                        </a>
+                    </li>
                     <li class="nav-item dropdown">
                         <button class="btn btn-success nav-link dropdown-toggle border-0" data-bs-toggle="dropdown" type="button">
                             <i class="bi bi-person-circle me-1"></i>{{ auth()->user()->name }}

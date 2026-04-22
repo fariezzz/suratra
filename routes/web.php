@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LetterArchiveController;
 use App\Http\Controllers\LetterRequestController;
 use App\Http\Controllers\ResidentController;
 use Illuminate\Support\Facades\Route;
@@ -14,6 +15,10 @@ Route::middleware('guest')->group(function (): void {
 Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::prefix('arsip-surat')->name('archives.')->group(function (): void {
+        Route::get('/', [LetterArchiveController::class, 'index'])->name('index');
+        Route::get('/{letterArchive}', [LetterArchiveController::class, 'show'])->name('show');
+    });
 
     Route::middleware('role:pengurus_rt,pengurus_rw')->group(function (): void {
         Route::resource('warga', ResidentController::class)
