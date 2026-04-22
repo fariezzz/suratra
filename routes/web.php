@@ -27,6 +27,9 @@ Route::middleware('auth')->group(function (): void {
         Route::post('/', [LetterRequestController::class, 'store'])
             ->middleware('role:warga')
             ->name('store');
+        Route::delete('/{letterRequest}', [LetterRequestController::class, 'cancel'])
+            ->middleware('role:warga')
+            ->name('cancel');
         Route::post('/{letterRequest}/rt', [LetterRequestController::class, 'rtDecision'])
             ->middleware('role:pengurus_rt')
             ->name('rt-decision');

@@ -172,6 +172,37 @@ class LetterRequestController extends Controller
         ]);
     }
 
+    public function cancel(Request $request, LetterRequest $letterRequest): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user->isWarga(), 403);
+
+        $letterRequest->loadMissing('resident');
+        $this->authorizeRequestAccess($request, $letterRequest);
+
+        $cancellableStatuses = [
+            LetterRequestStatus::PENDING_RT->value,
+            LetterRequestStatus::PENDING_RW->value,
+        ];
+
+        if (! in_array($letterRequest->status, $cancellableStatuses, true)) {
+            return to_route('letters.index')->with('error', 'Pengajuan ini tidak bisa dibatalkan.');
+        }
+
+        $documentPaths = collect($letterRequest->documents ?? [])
+            ->pluck('path')
+            ->filter()
+            ->all();
+
+        if ($documentPaths !== []) {
+            Storage::disk('local')->delete($documentPaths);
+        }
+
+        $letterRequest->delete();
+
+        return to_route('letters.index')->with('success', 'Pengajuan berhasil dibatalkan.');
+    }
+
     public function downloadDocument(Request $request, LetterRequest $letterRequest, string $key)
     {
         $letterRequest->loadMissing('resident');
@@ -183,7 +214,7 @@ class LetterRequestController extends Controller
         abort_unless($document, 404, 'Dokumen tidak ditemukan.');
         abort_unless(Storage::disk('local')->exists($document['path']), 404, 'File tidak tersedia.');
 
-        return Storage::disk('local')->download($document['path'], $document['original_name']);
+        return response()->file(Storage::disk('local')->path($document['path']));
     }
 
     private function authorizeRequestAccess(Request $request, LetterRequest $letterRequest): void
