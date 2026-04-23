@@ -25,6 +25,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'managed_rt',
         'resident_id',
     ];
 
@@ -80,5 +81,14 @@ class User extends Authenticatable
     public function isRw(): bool
     {
         return $this->hasRole(UserRole::RW);
+    }
+
+    public function canAccessRt(string $rt): bool
+    {
+        if ($this->isRw()) {
+            return true;
+        }
+
+        return $this->isRt() && $this->managed_rt === $rt;
     }
 }

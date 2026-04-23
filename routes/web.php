@@ -21,6 +21,8 @@ Route::middleware('auth')->group(function (): void {
     });
 
     Route::middleware('role:pengurus_rt,pengurus_rw')->group(function (): void {
+        Route::get('/warga-per-rt', [ResidentController::class, 'rtOverview'])->name('residents.rt-overview');
+        Route::get('/warga-per-rt/{rt}', [ResidentController::class, 'rtResidents'])->name('residents.rt-residents');
         Route::resource('warga', ResidentController::class)
             ->except('show')
             ->parameters(['warga' => 'resident'])

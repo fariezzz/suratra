@@ -15,7 +15,7 @@
         <div class="card-body">
             <form method="GET" action="{{ route('residents.index') }}" class="row g-2">
                 <div class="col-md-10">
-                    <input type="text" class="form-control" name="q" value="{{ $keyword }}" placeholder="Cari nama, NIK, atau alamat...">
+                    <input type="text" class="form-control" name="q" value="{{ $keyword }}" placeholder="Cari nama, NIK, alamat KTP, atau alamat saat ini...">
                 </div>
                 <div class="col-md-2">
                     <button class="btn btn-outline-success w-100" type="submit">
@@ -33,7 +33,9 @@
                     <tr>
                         <th>NIK</th>
                         <th>Nama</th>
-                        <th>Alamat</th>
+                        <th>Status Warga</th>
+                        <th>Alamat KTP</th>
+                        <th>Alamat Saat Ini</th>
                         <th>RT/RW</th>
                         <th>Email Akun</th>
                         <th class="text-end">Aksi</th>
@@ -44,6 +46,8 @@
                         <tr>
                             <td>{{ $resident->nik }}</td>
                             <td>{{ $resident->name }}</td>
+                            <td>{{ $resident->resident_status === 'warga_asli' ? 'Warga Asli' : 'Pendatang' }}</td>
+                            <td>{{ $resident->ktp_address }}</td>
                             <td>{{ $resident->address }}</td>
                             <td>{{ $resident->rt }}/{{ $resident->rw }}</td>
                             <td>{{ $resident->user?->email ?? '-' }}</td>
@@ -62,7 +66,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-4">Belum ada data warga.</td>
+                            <td colspan="8" class="text-center text-muted py-4">Belum ada data warga.</td>
                         </tr>
                     @endforelse
                 </tbody>

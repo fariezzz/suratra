@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Models\Resident;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,14 +17,16 @@ class ResidentController extends Controller
 {
     public function index(Request $request): View
     {
+        $user = $request->user();
         $keyword = trim((string) $request->query('q', ''));
 
-        $residents = Resident::query()
+        $residents = $this->visibleResidentsQuery($user)
             ->with('user')
             ->when($keyword !== '', function ($query) use ($keyword): void {
                 $query->where(function ($inner) use ($keyword): void {
                     $inner->where('name', 'like', "%{$keyword}%")
                         ->orWhere('nik', 'like', "%{$keyword}%")
+                        ->orWhere('ktp_address', 'like', "%{$keyword}%")
                         ->orWhere('address', 'like', "%{$keyword}%");
                 });
             })
@@ -34,6 +37,54 @@ class ResidentController extends Controller
         return view('residents.index', compact('residents', 'keyword'));
     }
 
+    public function rtOverview(Request $request): View
+    {
+        $user = $request->user();
+        abort_unless($user->isRt() || $user->isRw(), 403);
+        abort_unless(! $user->isRt() || $user->managed_rt, 403, 'Akun RT belum terhubung ke wilayah RT.');
+
+        $rtSummaries = Resident::query()
+            ->select('rt')
+            ->selectRaw('COUNT(*) as total_warga')
+            ->selectRaw("SUM(CASE WHEN resident_status = 'warga_asli' THEN 1 ELSE 0 END) as warga_asli_count")
+            ->selectRaw("SUM(CASE WHEN resident_status = 'pendatang' THEN 1 ELSE 0 END) as pendatang_count")
+            ->when($user->isRt(), fn ($query) => $query->where('rt', $user->managed_rt))
+            ->groupBy('rt')
+            ->orderBy('rt')
+            ->get()
+            ->map(function ($item) {
+                $item->status_label = ((int) $item->pendatang_count) > 0 ? 'Campuran' : 'Dominan Warga Asli';
+
+                return $item;
+            });
+
+        return view('residents.rt-overview', [
+            'rtSummaries' => $rtSummaries,
+            'isRt' => $user->isRt(),
+            'managedRt' => $user->managed_rt,
+        ]);
+    }
+
+    public function rtResidents(Request $request, string $rt): View
+    {
+        $user = $request->user();
+        abort_unless($user->isRt() || $user->isRw(), 403);
+        abort_unless($user->canAccessRt($rt), 403, 'Anda tidak memiliki akses ke data RT ini.');
+
+        $residents = Resident::query()
+            ->with('user')
+            ->where('rt', $rt)
+            ->orderBy('name')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('residents.rt-residents', [
+            'rt' => $rt,
+            'residents' => $residents,
+            'isRt' => $user->isRt(),
+        ]);
+    }
+
     public function create(): View
     {
         return view('residents.create');
@@ -41,13 +92,16 @@ class ResidentController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $user = $request->user();
         $validatedResident = $request->validate([
             'nik' => ['required', 'digits:16', 'unique:residents,nik'],
             'name' => ['required', 'string', 'max:100'],
             'gender' => ['required', Rule::in(['L', 'P'])],
             'birth_place' => ['nullable', 'string', 'max:100'],
             'birth_date' => ['nullable', 'date'],
+            'ktp_address' => ['required', 'string', 'max:255'],
             'address' => ['required', 'string', 'max:255'],
+            'resident_status' => ['required', Rule::in(['warga_asli', 'pendatang'])],
             'rt' => ['required', 'digits:3'],
             'rw' => ['required', 'digits:3'],
             'phone' => ['nullable', 'string', 'max:20'],
@@ -56,6 +110,11 @@ class ResidentController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
+        if ($user->isRt()) {
+            abort_unless($user->managed_rt, 403, 'Akun RT belum terhubung ke wilayah RT.');
+            $validatedResident['rt'] = $user->managed_rt;
+        }
+
         DB::transaction(function () use ($validatedResident): void {
             $resident = Resident::query()->create([
                 'nik' => $validatedResident['nik'],
@@ -63,7 +122,9 @@ class ResidentController extends Controller
                 'gender' => $validatedResident['gender'],
                 'birth_place' => $validatedResident['birth_place'] ?? null,
                 'birth_date' => $validatedResident['birth_date'] ?? null,
+                'ktp_address' => $validatedResident['ktp_address'],
                 'address' => $validatedResident['address'],
+                'resident_status' => $validatedResident['resident_status'],
                 'rt' => $validatedResident['rt'],
                 'rw' => $validatedResident['rw'],
                 'phone' => $validatedResident['phone'] ?? null,
@@ -84,6 +145,7 @@ class ResidentController extends Controller
 
     public function edit(Resident $resident): View
     {
+        $this->authorizeResidentAccess(request()->user(), $resident);
         $resident->load('user');
 
         return view('residents.edit', compact('resident'));
@@ -91,6 +153,7 @@ class ResidentController extends Controller
 
     public function update(Request $request, Resident $resident): RedirectResponse
     {
+        $this->authorizeResidentAccess($request->user(), $resident);
         $resident->load('user');
 
         $validated = $request->validate([
@@ -99,7 +162,9 @@ class ResidentController extends Controller
             'gender' => ['required', Rule::in(['L', 'P'])],
             'birth_place' => ['nullable', 'string', 'max:100'],
             'birth_date' => ['nullable', 'date'],
+            'ktp_address' => ['required', 'string', 'max:255'],
             'address' => ['required', 'string', 'max:255'],
+            'resident_status' => ['required', Rule::in(['warga_asli', 'pendatang'])],
             'rt' => ['required', 'digits:3'],
             'rw' => ['required', 'digits:3'],
             'phone' => ['nullable', 'string', 'max:20'],
@@ -112,6 +177,10 @@ class ResidentController extends Controller
             ],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ]);
+
+        if ($request->user()->isRt()) {
+            $validated['rt'] = $request->user()->managed_rt;
+        }
 
         if (! $resident->user && empty($validated['password'])) {
             return back()
@@ -126,7 +195,9 @@ class ResidentController extends Controller
                 'gender' => $validated['gender'],
                 'birth_place' => $validated['birth_place'] ?? null,
                 'birth_date' => $validated['birth_date'] ?? null,
+                'ktp_address' => $validated['ktp_address'],
                 'address' => $validated['address'],
+                'resident_status' => $validated['resident_status'],
                 'rt' => $validated['rt'],
                 'rw' => $validated['rw'],
                 'phone' => $validated['phone'] ?? null,
@@ -159,11 +230,30 @@ class ResidentController extends Controller
 
     public function destroy(Resident $resident): RedirectResponse
     {
+        $this->authorizeResidentAccess(request()->user(), $resident);
+
         DB::transaction(function () use ($resident): void {
             User::query()->where('resident_id', $resident->id)->delete();
             $resident->delete();
         });
 
         return to_route('residents.index')->with('success', 'Data warga berhasil dihapus.');
+    }
+
+    private function visibleResidentsQuery(User $user): Builder
+    {
+        return Resident::query()
+            ->when($user->isRt(), function (Builder $query) use ($user): void {
+                abort_unless($user->managed_rt, 403, 'Akun RT belum terhubung ke wilayah RT.');
+                $query->where('rt', $user->managed_rt);
+            });
+    }
+
+    private function authorizeResidentAccess(User $user, Resident $resident): void
+    {
+        if ($user->isRt()) {
+            abort_unless($user->managed_rt, 403, 'Akun RT belum terhubung ke wilayah RT.');
+            abort_unless($resident->rt === $user->managed_rt, 403, 'Anda tidak memiliki akses ke data warga RT lain.');
+        }
     }
 }

@@ -20,6 +20,7 @@ class UserSeeder extends Seeder
                 'name' => 'Pengurus RT',
                 'password' => '12345',
                 'role' => UserRole::RT,
+                'managed_rt' => '001',
                 'resident_id' => null,
             ]
         );
@@ -30,6 +31,7 @@ class UserSeeder extends Seeder
                 'name' => 'Pengurus RW',
                 'password' => '12345',
                 'role' => UserRole::RW,
+                'managed_rt' => null,
                 'resident_id' => null,
             ]
         );
@@ -44,6 +46,7 @@ class UserSeeder extends Seeder
                     'email' => sprintf('warga%02d@demo.local', $index + 1),
                     'password' => '12345',
                     'role' => UserRole::WARGA,
+                    'managed_rt' => null,
                 ]
             );
         }

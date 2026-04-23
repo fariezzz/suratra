@@ -26,23 +26,35 @@
         <label class="form-label" for="birth_date">Tanggal Lahir</label>
         <input type="date" class="form-control" id="birth_date" name="birth_date" value="{{ old('birth_date', $residentModel?->birth_date?->format('Y-m-d')) }}">
     </div>
-    <div class="col-12">
-        <label class="form-label" for="address">Alamat</label>
+    <div class="col-md-6">
+        <label class="form-label" for="ktp_address">Alamat KTP</label>
+        <textarea class="form-control" id="ktp_address" name="ktp_address" rows="3" required>{{ old('ktp_address', $residentModel?->ktp_address) }}</textarea>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label" for="address">Alamat Saat Ini</label>
         <textarea class="form-control" id="address" name="address" rows="3" required>{{ old('address', $residentModel?->address) }}</textarea>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
+        <label class="form-label" for="resident_status">Status Warga</label>
+        <select class="form-select" id="resident_status" name="resident_status" required>
+            <option value="">Pilih status warga</option>
+            <option value="warga_asli" @selected(old('resident_status', $residentModel?->resident_status) === 'warga_asli')>Warga Asli</option>
+            <option value="pendatang" @selected(old('resident_status', $residentModel?->resident_status) === 'pendatang')>Pendatang</option>
+        </select>
+    </div>
+    <div class="col-md-2">
         <label class="form-label" for="rt">RT</label>
         <input type="text" class="form-control" id="rt" name="rt" value="{{ old('rt', $residentModel?->rt) }}" maxlength="3" required>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <label class="form-label" for="rw">RW</label>
         <input type="text" class="form-control" id="rw" name="rw" value="{{ old('rw', $residentModel?->rw) }}" maxlength="3" required>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <label class="form-label" for="phone">Nomor HP</label>
         <input type="text" class="form-control" id="phone" name="phone" value="{{ old('phone', $residentModel?->phone) }}">
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <label class="form-label" for="occupation">Pekerjaan</label>
         <input type="text" class="form-control" id="occupation" name="occupation" value="{{ old('occupation', $residentModel?->occupation) }}">
     </div>
