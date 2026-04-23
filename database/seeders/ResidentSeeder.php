@@ -22,7 +22,7 @@ class ResidentSeeder extends Seeder
                 'birth_place' => 'Tasikmalaya',
                 'birth_date' => '1990-01-01',
                 'address' => 'Jl. Melati No. 12, Kel. Sukamaju',
-                'rt' => '001',
+                'rt' => '009',
                 'rw' => '003',
                 'phone' => '081234567801',
                 'occupation' => 'Karyawan Swasta',
@@ -34,7 +34,7 @@ class ResidentSeeder extends Seeder
                 'birth_place' => 'Tasikmalaya',
                 'birth_date' => '1992-02-15',
                 'address' => 'Jl. Mawar No. 05, Kel. Sukamaju',
-                'rt' => '001',
+                'rt' => '009',
                 'rw' => '003',
                 'phone' => '081234567802',
                 'occupation' => 'Wiraswasta',
@@ -46,7 +46,7 @@ class ResidentSeeder extends Seeder
                 'birth_place' => 'Bandung',
                 'birth_date' => '1985-03-03',
                 'address' => 'Jl. Kenanga No. 14, Kel. Sukamaju',
-                'rt' => '002',
+                'rt' => '009',
                 'rw' => '003',
                 'phone' => '081234567803',
                 'occupation' => 'Guru',
@@ -58,7 +58,7 @@ class ResidentSeeder extends Seeder
                 'birth_place' => 'Ciamis',
                 'birth_date' => '1988-07-22',
                 'address' => 'Jl. Anggrek No. 08, Kel. Sukamaju',
-                'rt' => '002',
+                'rt' => '009',
                 'rw' => '003',
                 'phone' => '081234567804',
                 'occupation' => 'Ibu Rumah Tangga',
@@ -70,7 +70,7 @@ class ResidentSeeder extends Seeder
                 'birth_place' => 'Garut',
                 'birth_date' => '1995-09-10',
                 'address' => 'Jl. Dahlia No. 22, Kel. Sukamaju',
-                'rt' => '003',
+                'rt' => '009',
                 'rw' => '003',
                 'phone' => '081234567805',
                 'occupation' => 'Mahasiswa',
@@ -82,7 +82,7 @@ class ResidentSeeder extends Seeder
                 'birth_place' => 'Tasikmalaya',
                 'birth_date' => '1996-04-17',
                 'address' => 'Jl. Cempaka No. 03, Kel. Sukamaju',
-                'rt' => '003',
+                'rt' => '009',
                 'rw' => '003',
                 'phone' => '081234567806',
                 'occupation' => 'Perawat',
@@ -94,7 +94,7 @@ class ResidentSeeder extends Seeder
                 'birth_place' => 'Tasikmalaya',
                 'birth_date' => '1981-01-28',
                 'address' => 'Jl. Flamboyan No. 19, Kel. Sukamaju',
-                'rt' => '004',
+                'rt' => '009',
                 'rw' => '004',
                 'phone' => '081234567807',
                 'occupation' => 'Pedagang',
@@ -106,7 +106,7 @@ class ResidentSeeder extends Seeder
                 'birth_place' => 'Banjar',
                 'birth_date' => '1990-07-05',
                 'address' => 'Jl. Teratai No. 09, Kel. Sukamaju',
-                'rt' => '004',
+                'rt' => '009',
                 'rw' => '004',
                 'phone' => '081234567808',
                 'occupation' => 'Pegawai Negeri',
@@ -118,7 +118,7 @@ class ResidentSeeder extends Seeder
                 'birth_place' => 'Tasikmalaya',
                 'birth_date' => '1987-04-09',
                 'address' => 'Jl. Kamboja No. 11, Kel. Sukamaju',
-                'rt' => '005',
+                'rt' => '009',
                 'rw' => '004',
                 'phone' => '081234567809',
                 'occupation' => 'Teknisi',
@@ -130,7 +130,7 @@ class ResidentSeeder extends Seeder
                 'birth_place' => 'Tasikmalaya',
                 'birth_date' => '1993-10-12',
                 'address' => 'Jl. Bougenville No. 18, Kel. Sukamaju',
-                'rt' => '005',
+                'rt' => '009',
                 'rw' => '004',
                 'phone' => '081234567810',
                 'occupation' => 'Desainer Grafis',
@@ -142,7 +142,7 @@ class ResidentSeeder extends Seeder
                 'birth_place' => 'Cirebon',
                 'birth_date' => '2000-06-30',
                 'address' => 'Jl. Pahlawan No. 01, Kel. Sukamaju',
-                'rt' => '006',
+                'rt' => '009',
                 'rw' => '005',
                 'phone' => '081234567811',
                 'occupation' => 'Freelancer',
@@ -154,18 +154,27 @@ class ResidentSeeder extends Seeder
                 'birth_place' => 'Tasikmalaya',
                 'birth_date' => '1999-11-18',
                 'address' => 'Jl. Merpati No. 04, Kel. Sukamaju',
-                'rt' => '006',
+                'rt' => '009',
                 'rw' => '005',
                 'phone' => '081234567812',
                 'occupation' => 'Admin Online Shop',
             ],
         ];
 
-        $rows = array_map(static fn (array $resident) => [
-            ...$resident,
-            'created_at' => $now,
-            'updated_at' => $now,
-        ], $residents);
+        $rtOptions = ['001', '002'];
+
+        $rows = array_map(
+            static function (array $resident) use ($rtOptions, $now): array {
+                return [
+                    ...$resident,
+                    'rt' => $rtOptions[array_rand($rtOptions)],
+                    'rw' => '009',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            },
+            $residents
+        );
 
         Resident::query()->upsert(
             $rows,

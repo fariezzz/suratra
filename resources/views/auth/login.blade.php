@@ -7,7 +7,7 @@
                 <div class="login-icon mb-3">
                     <i class="bi bi-shield-lock"></i>
                 </div>
-                <h1 class="h4 mb-1">Sistem Informasi Persuratan RT/RW</h1>
+                <h1 class="h4 mb-1">Suratra</h1>
                 <p class="text-muted mb-0">Silakan login sesuai akun yang diberikan pengurus.</p>
             </div>
 

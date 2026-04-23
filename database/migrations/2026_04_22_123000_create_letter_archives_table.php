@@ -28,8 +28,8 @@ return new class extends Migration
             $table->text('purpose');
             $table->json('documents')->nullable();
             $table->longText('generated_content');
-            $table->timestamp('issued_at')->nullable();
-            $table->timestamp('archived_at');
+            $table->dateTime('issued_at')->nullable();
+            $table->dateTime('archived_at');
             $table->timestamps();
 
             $table->index('reference_number');
