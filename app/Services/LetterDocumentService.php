@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\LetterRequest;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpWord\TemplateProcessor;
 use RuntimeException;
 
 class LetterDocumentService
@@ -20,7 +22,7 @@ class LetterDocumentService
 
         $values = $this->templateValues($letterRequest);
 
-        $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
+        $templateProcessor = new TemplateProcessor($templatePath);
         foreach ($values as $placeholder => $value) {
             $templateProcessor->setValue($placeholder, $value ?? '');
         }
@@ -123,7 +125,7 @@ class LetterDocumentService
         $date = '';
         
         if ($birthDate) {
-            $date = \Carbon\Carbon::parse($birthDate)->isoFormat('D MMMM YYYY');
+            $date = Carbon::parse($birthDate)->isoFormat('D MMMM YYYY');
         }
         
         return "{$place}, {$date}";
