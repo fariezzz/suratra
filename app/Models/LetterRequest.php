@@ -7,7 +7,6 @@ use App\Enums\LetterType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class LetterRequest extends Model
 {
@@ -24,6 +23,8 @@ class LetterRequest extends Model
         'documents',
         'letter_number',
         'generated_content',
+        'generated_pdf_path',
+        'generated_docx_path',
         'issued_at',
     ];
 
@@ -35,11 +36,6 @@ class LetterRequest extends Model
     public function resident(): BelongsTo
     {
         return $this->belongsTo(Resident::class);
-    }
-
-    public function archive(): HasOne
-    {
-        return $this->hasOne(LetterArchive::class);
     }
 
     public function getLetterTypeLabelAttribute(): string

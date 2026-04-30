@@ -191,6 +191,8 @@ class ResidentSeeder extends Seeder
             static function (array $resident) use ($rtOptions, $now): array {
                 return [
                     ...$resident,
+                    'agama' => $resident['agama'] ?? 'Islam',
+                    'status_kawin' => $resident['status_kawin'] ?? 'Belum Kawin',
                     'rt' => $rtOptions[array_rand($rtOptions)],
                     'rw' => '009',
                     'created_at' => $now,
@@ -203,7 +205,7 @@ class ResidentSeeder extends Seeder
         Resident::query()->upsert(
             $rows,
             ['nik'],
-            ['name', 'gender', 'birth_place', 'birth_date', 'ktp_address', 'address', 'resident_status', 'rt', 'rw', 'phone', 'occupation', 'updated_at']
+            ['name', 'gender', 'birth_place', 'birth_date', 'agama', 'status_kawin', 'ktp_address', 'address', 'resident_status', 'rt', 'rw', 'phone', 'occupation', 'updated_at']
         );
     }
 }

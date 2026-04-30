@@ -5,9 +5,21 @@
         <a href="{{ route('archives.index') }}" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i>Kembali ke Arsip
         </a>
-        <button type="button" onclick="window.print()" class="btn btn-primary">
-            <i class="bi bi-printer me-1"></i>Cetak Surat
-        </button>
+        <div class="btn-group">
+            @if ($letterArchive->generated_pdf_path)
+                <a href="{{ route('archives.pdf', $letterArchive) }}" target="_blank" class="btn btn-success">
+                    <i class="bi bi-filetype-pdf me-1"></i>Lihat PDF
+                </a>
+            @endif
+            @if ($letterArchive->generated_docx_path)
+                <a href="{{ route('archives.docx', $letterArchive) }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-file-earmark-word me-1"></i>Unduh DOCX
+                </a>
+            @endif
+            <button type="button" onclick="window.print()" class="btn btn-primary">
+                <i class="bi bi-printer me-1"></i>Cetak Surat
+            </button>
+        </div>
     </div>
 
     <div class="card card-soft mb-3 no-print">

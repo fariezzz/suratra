@@ -19,6 +19,16 @@ class ResidentController extends Controller
     {
         $user = $request->user();
         $keyword = trim((string) $request->query('q', ''));
+        $gender = trim((string) $request->query('gender', ''));
+        $residentStatus = trim((string) $request->query('resident_status', ''));
+
+        if (! in_array($gender, ['L', 'P'], true)) {
+            $gender = '';
+        }
+
+        if (! in_array($residentStatus, ['warga_asli', 'pendatang'], true)) {
+            $residentStatus = '';
+        }
 
         $residents = $this->visibleResidentsQuery($user)
             ->with('user')
@@ -30,11 +40,13 @@ class ResidentController extends Controller
                         ->orWhere('address', 'like', "%{$keyword}%");
                 });
             })
+            ->when($gender !== '', fn ($query) => $query->where('gender', $gender))
+            ->when($residentStatus !== '', fn ($query) => $query->where('resident_status', $residentStatus))
             ->orderBy('name')
             ->paginate(10)
             ->withQueryString();
 
-        return view('residents.index', compact('residents', 'keyword'));
+        return view('residents.index', compact('residents', 'keyword', 'gender', 'residentStatus'));
     }
 
     public function rtOverview(Request $request): View
@@ -100,6 +112,8 @@ class ResidentController extends Controller
             'birth_place' => ['nullable', 'string', 'max:100'],
             'birth_date' => ['nullable', 'date'],
             'ktp_address' => ['required', 'string', 'max:255'],
+            'status_kawin' => ['nullable', 'string', 'max:50'],
+            'agama' => ['nullable', 'string', 'max:30'],
             'address' => ['required', 'string', 'max:255'],
             'resident_status' => ['required', Rule::in(['warga_asli', 'pendatang'])],
             'rt' => ['required', 'digits:3'],
@@ -123,6 +137,8 @@ class ResidentController extends Controller
                 'birth_place' => $validatedResident['birth_place'] ?? null,
                 'birth_date' => $validatedResident['birth_date'] ?? null,
                 'ktp_address' => $validatedResident['ktp_address'],
+                'status_kawin' => $validatedResident['status_kawin'] ?? null,
+                'agama' => $validatedResident['agama'] ?? null,
                 'address' => $validatedResident['address'],
                 'resident_status' => $validatedResident['resident_status'],
                 'rt' => $validatedResident['rt'],
@@ -163,6 +179,8 @@ class ResidentController extends Controller
             'birth_place' => ['nullable', 'string', 'max:100'],
             'birth_date' => ['nullable', 'date'],
             'ktp_address' => ['required', 'string', 'max:255'],
+            'status_kawin' => ['nullable', 'string', 'max:50'],
+            'agama' => ['nullable', 'string', 'max:30'],
             'address' => ['required', 'string', 'max:255'],
             'resident_status' => ['required', Rule::in(['warga_asli', 'pendatang'])],
             'rt' => ['required', 'digits:3'],
@@ -196,6 +214,8 @@ class ResidentController extends Controller
                 'birth_place' => $validated['birth_place'] ?? null,
                 'birth_date' => $validated['birth_date'] ?? null,
                 'ktp_address' => $validated['ktp_address'],
+                'status_kawin' => $validated['status_kawin'] ?? null,
+                'agama' => $validated['agama'] ?? null,
                 'address' => $validated['address'],
                 'resident_status' => $validated['resident_status'],
                 'rt' => $validated['rt'],

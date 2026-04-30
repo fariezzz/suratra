@@ -26,6 +26,14 @@
         <label class="form-label" for="birth_date">Tanggal Lahir</label>
         <input type="date" class="form-control" id="birth_date" name="birth_date" value="{{ old('birth_date', $residentModel?->birth_date?->format('Y-m-d')) }}">
     </div>
+    <div class="col-md-4">
+        <label class="form-label" for="status_kawin">Status Perkawinan</label>
+        <input type="text" class="form-control" id="status_kawin" name="status_kawin" value="{{ old('status_kawin', $residentModel?->status_kawin) }}" placeholder="Contoh: Belum Kawin/Kawin">
+    </div>
+    <div class="col-md-4">
+        <label class="form-label" for="agama">Agama</label>
+        <input type="text" class="form-control" id="agama" name="agama" value="{{ old('agama', $residentModel?->agama) }}" placeholder="Contoh: Islam">
+    </div>
     <div class="col-md-6">
         <label class="form-label" for="ktp_address">Alamat KTP</label>
         <textarea class="form-control" id="ktp_address" name="ktp_address" rows="3" required>{{ old('ktp_address', $residentModel?->ktp_address) }}</textarea>

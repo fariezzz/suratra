@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\LetterRequestStatus;
 use App\Enums\LetterType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -26,6 +25,8 @@ class LetterArchive extends Model
         'purpose',
         'documents',
         'generated_content',
+        'generated_pdf_path',
+        'generated_docx_path',
         'issued_at',
         'archived_at',
     ];
@@ -36,28 +37,13 @@ class LetterArchive extends Model
         'archived_at' => 'datetime',
     ];
 
-    public function letterRequest(): BelongsTo
-    {
-        return $this->belongsTo(LetterRequest::class);
-    }
-
     public function resident(): BelongsTo
     {
         return $this->belongsTo(Resident::class);
     }
 
-    public function archivedBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'archived_by');
-    }
-
     public function getLetterTypeLabelAttribute(): string
     {
         return LetterType::tryFrom($this->letter_type)?->label() ?? $this->letter_type;
-    }
-
-    public function getStatusLabelAttribute(): string
-    {
-        return LetterRequestStatus::tryFrom($this->request_status)?->label() ?? $this->request_status;
     }
 }

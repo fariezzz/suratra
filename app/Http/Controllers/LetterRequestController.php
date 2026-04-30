@@ -6,9 +6,12 @@ use App\Enums\LetterRequestStatus;
 use App\Enums\LetterType;
 use App\Models\LetterArchive;
 use App\Models\LetterRequest;
+use App\Services\LetterDocumentService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -137,32 +140,50 @@ class LetterRequestController extends Controller
         $isApproved = $validated['decision'] === 'approve';
 
         if ($isApproved) {
-            $letterRequest->loadMissing('resident');
-            $letterRequest->status = LetterRequestStatus::COMPLETED->value;
-            $letterRequest->rw_notes = $validated['notes'] ?? null;
-            $letterRequest->issued_at = now();
-            $letterRequest->letter_number = $this->generateLetterNumber();
-            $letterRequest->generated_content = $this->renderGeneratedLetter($letterRequest);
-            $letterRequest->save();
+            try {
+                DB::transaction(function () use ($request, $validated, $letterRequest): void {
+                    $letterRequest->loadMissing('resident');
+                    $letterRequest->status = LetterRequestStatus::COMPLETED->value;
+                    $letterRequest->rw_notes = $validated['notes'] ?? null;
+                    $letterRequest->issued_at = now();
+                    $letterRequest->letter_number = $this->generateLetterNumber();
 
-            LetterArchive::query()->updateOrCreate(
-                ['letter_request_id' => $letterRequest->id],
-                [
-                    'resident_id' => $letterRequest->resident_id,
-                    'archived_by' => $request->user()->id,
-                    'reference_number' => $letterRequest->reference_number,
-                    'letter_number' => $letterRequest->letter_number,
-                    'letter_type' => $letterRequest->letter_type,
-                    'request_status' => $letterRequest->status,
-                    'resident_nik' => $letterRequest->resident->nik,
-                    'resident_name' => $letterRequest->resident->name,
-                    'purpose' => $letterRequest->purpose,
-                    'documents' => $letterRequest->documents,
-                    'generated_content' => $letterRequest->generated_content,
-                    'issued_at' => $letterRequest->issued_at,
-                    'archived_at' => now(),
-                ]
-            );
+                    $documentService = app(LetterDocumentService::class);
+                    $docxPublicPath = $documentService->generateDocx($letterRequest);
+                    $letterRequest->generated_docx_path = $docxPublicPath;
+
+                    $pdfPath = $documentService->generatePdfFromDocx($docxPublicPath, $letterRequest->id);
+                    $letterRequest->generated_pdf_path = $pdfPath;
+
+                    $letterRequest->generated_content = '';
+                    $letterRequest->save();
+
+                    LetterArchive::query()->updateOrCreate(
+                        ['letter_request_id' => $letterRequest->id],
+                        [
+                            'resident_id' => $letterRequest->resident_id,
+                            'archived_by' => $request->user()->id,
+                            'reference_number' => $letterRequest->reference_number,
+                            'letter_number' => $letterRequest->letter_number,
+                            'letter_type' => $letterRequest->letter_type,
+                            'request_status' => $letterRequest->status,
+                            'resident_nik' => $letterRequest->resident->nik,
+                            'resident_name' => $letterRequest->resident->name,
+                            'purpose' => $letterRequest->purpose,
+                            'documents' => $letterRequest->documents,
+                            'generated_content' => $letterRequest->generated_content ?? '',
+                            'generated_pdf_path' => $letterRequest->generated_pdf_path,
+                            'generated_docx_path' => $letterRequest->generated_docx_path ?? null,
+                            'issued_at' => $letterRequest->issued_at,
+                            'archived_at' => now(),
+                        ]
+                    );
+                });
+            } catch (\Throwable $e) {
+                Log::error('RW approval transaction failed: '.$e->getMessage());
+
+                return to_route('letters.index')->with('error', 'Pengajuan tidak bisa diarsipkan: '.$e->getMessage());
+            }
         } else {
             $letterRequest->update([
                 'status' => LetterRequestStatus::REJECTED_RW->value,
@@ -170,11 +191,13 @@ class LetterRequestController extends Controller
                 'issued_at' => null,
                 'letter_number' => null,
                 'generated_content' => null,
+                'generated_pdf_path' => null,
+                'generated_docx_path' => null,
             ]);
         }
 
         $message = $isApproved
-            ? 'Pengajuan disetujui RW. Surat otomatis berhasil dibuat.'
+            ? 'Pengajuan disetujui RW. Surat dan PDF berhasil dibuat.'
             : 'Pengajuan ditolak oleh RW.';
 
         return to_route('letters.index')->with('success', $message);
@@ -237,6 +260,31 @@ class LetterRequestController extends Controller
         return response()->file(Storage::disk('local')->path($document['path']));
     }
 
+    public function downloadPdf(Request $request, LetterRequest $letterRequest)
+    {
+        $letterRequest->loadMissing('resident');
+        $this->authorizeRequestAccess($request, $letterRequest);
+        
+        abort_unless($letterRequest->generated_pdf_path, 404, 'File PDF tidak tersedia.');
+        abort_unless(Storage::disk('public')->exists($letterRequest->generated_pdf_path), 404, 'File tidak ditemukan.');
+
+        return response()->file(
+            Storage::disk('public')->path($letterRequest->generated_pdf_path),
+            ['Content-Type' => 'application/pdf']
+        );
+    }
+
+    public function downloadDocx(Request $request, LetterRequest $letterRequest)
+    {
+        $letterRequest->loadMissing('resident');
+        $this->authorizeRequestAccess($request, $letterRequest);
+
+        abort_unless($letterRequest->generated_docx_path, 404, 'File DOCX tidak tersedia.');
+        abort_unless(Storage::disk('public')->exists($letterRequest->generated_docx_path), 404, 'File tidak ditemukan.');
+
+        return response()->download(Storage::disk('public')->path($letterRequest->generated_docx_path), basename($letterRequest->generated_docx_path));
+    }
+
     private function authorizeRequestAccess(Request $request, LetterRequest $letterRequest): void
     {
         $user = $request->user();
@@ -262,14 +310,5 @@ class LetterRequestController extends Controller
         } while (LetterRequest::query()->where('letter_number', $candidate)->exists());
 
         return $candidate;
-    }
-
-    private function renderGeneratedLetter(LetterRequest $letterRequest): string
-    {
-        $type = LetterType::from($letterRequest->letter_type);
-
-        return view($type->templateView(), [
-            'letterRequest' => $letterRequest,
-        ])->render();
     }
 }

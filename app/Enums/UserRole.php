@@ -16,9 +16,4 @@ enum UserRole: string
             self::RW => 'Pengurus RW',
         };
     }
-
-    public static function values(): array
-    {
-        return array_map(static fn (self $case) => $case->value, self::cases());
-    }
 }

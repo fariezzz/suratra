@@ -18,11 +18,16 @@ Route::middleware('auth')->group(function (): void {
     Route::prefix('arsip-surat')->name('archives.')->group(function (): void {
         Route::get('/', [LetterArchiveController::class, 'index'])->name('index');
         Route::get('/{letterArchive}', [LetterArchiveController::class, 'show'])->name('show');
+        Route::get('/{letterArchive}/pdf', [LetterArchiveController::class, 'downloadPdf'])->name('pdf');
+        Route::get('/{letterArchive}/docx', [LetterArchiveController::class, 'downloadDocx'])->name('docx');
     });
 
     Route::middleware('role:pengurus_rt,pengurus_rw')->group(function (): void {
-        Route::get('/warga-per-rt', [ResidentController::class, 'rtOverview'])->name('residents.rt-overview');
-        Route::get('/warga-per-rt/{rt}', [ResidentController::class, 'rtResidents'])->name('residents.rt-residents');
+        Route::prefix('warga')->name('residents.')->group(function (): void {
+            Route::get('/rt-overview', [ResidentController::class, 'rtOverview'])->name('rt-overview');
+            Route::get('/{rt}', [ResidentController::class, 'rtResidents'])->name('rt-residents');
+        });
+        
         Route::resource('warga', ResidentController::class)
             ->except('show')
             ->parameters(['warga' => 'resident'])
@@ -45,5 +50,7 @@ Route::middleware('auth')->group(function (): void {
             ->name('rw-decision');
         Route::get('/{letterRequest}/surat', [LetterRequestController::class, 'show'])->name('show');
         Route::get('/{letterRequest}/dokumen/{key}', [LetterRequestController::class, 'downloadDocument'])->name('document');
+        Route::get('/{letterRequest}/pdf', [LetterRequestController::class, 'downloadPdf'])->name('pdf');
+        Route::get('/{letterRequest}/docx', [LetterRequestController::class, 'downloadDocx'])->name('docx');
     });
 });

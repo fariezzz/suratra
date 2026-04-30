@@ -70,14 +70,4 @@ enum LetterType: string
 
         return $map;
     }
-
-    public function templateView(): string
-    {
-        return match ($this) {
-            self::GENERAL => 'letters.templates.general',
-            self::DOMICILE => 'letters.templates.domicile',
-            self::SKCK => 'letters.templates.skck',
-            self::BUSINESS => 'letters.templates.business',
-        };
-    }
 }

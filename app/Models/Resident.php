@@ -18,6 +18,8 @@ class Resident extends Model
         'birth_place',
         'birth_date',
         'ktp_address',
+        'status_kawin',
+        'agama',
         'address',
         'resident_status',
         'rt',
@@ -33,11 +35,6 @@ class Resident extends Model
     public function letterRequests(): HasMany
     {
         return $this->hasMany(LetterRequest::class);
-    }
-
-    public function letterArchives(): HasMany
-    {
-        return $this->hasMany(LetterArchive::class);
     }
 
     public function user(): HasOne

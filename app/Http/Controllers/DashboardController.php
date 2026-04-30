@@ -40,7 +40,6 @@ class DashboardController extends Controller
         ]);
 
         $rtSummaries = collect();
-        $rwPopulationStats = null;
         $selectedRt = null;
         $rtChartMetrics = collect();
         $residentProfile = null;
@@ -112,23 +111,6 @@ class DashboardController extends Controller
             }
         }
 
-        if ($user->isRw()) {
-            $totalWargaAsli = Resident::query()->where('resident_status', 'warga_asli')->count();
-            $totalPendatang = Resident::query()->where('resident_status', 'pendatang')->count();
-            $totalResident = max(1, Resident::query()->count());
-
-            $rwPopulationStats = [
-                'warga_asli' => [
-                    'count' => $totalWargaAsli,
-                    'percentage' => (int) round(($totalWargaAsli / $totalResident) * 100),
-                ],
-                'pendatang' => [
-                    'count' => $totalPendatang,
-                    'percentage' => (int) round(($totalPendatang / $totalResident) * 100),
-                ],
-            ];
-        }
-
         if ($user->isWarga()) {
             $residentProfile = $user->resident;
             $activeResidentRequests = LetterRequest::query()
@@ -167,6 +149,7 @@ class DashboardController extends Controller
         }
 
         return view('dashboard', [
+            'title' => 'Dashboard',
             'isWarga' => $user->isWarga(),
             'isRt' => $user->isRt(),
             'isRw' => $user->isRw(),
@@ -179,7 +162,6 @@ class DashboardController extends Controller
             'latestResidentRequest' => $latestResidentRequest,
             'letterTypes' => LetterType::options(),
             'rtCount' => $user->isRw() ? $rtSummaries->count() : null,
-            'rwPopulationStats' => $rwPopulationStats,
             'rtSummaries' => $rtSummaries,
             'selectedRt' => $selectedRt,
             'rtChartMetrics' => $rtChartMetrics,

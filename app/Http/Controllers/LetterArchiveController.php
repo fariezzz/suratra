@@ -8,6 +8,7 @@ use App\Models\LetterArchive;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class LetterArchiveController extends Controller
 {
@@ -59,5 +60,36 @@ class LetterArchiveController extends Controller
         return view('archives.show', [
             'letterArchive' => $letterArchive,
         ]);
+    }
+
+    public function downloadPdf(Request $request, LetterArchive $letterArchive)
+    {
+        $user = $request->user();
+
+        if ($user->isWarga()) {
+            abort_unless($user->resident_id && $letterArchive->resident_id === $user->resident_id, 403, 'Anda tidak memiliki akses ke arsip ini.');
+        }
+
+        abort_unless($letterArchive->generated_pdf_path, 404, 'File PDF tidak tersedia.');
+        abort_unless(Storage::disk('public')->exists($letterArchive->generated_pdf_path), 404, 'File tidak ditemukan.');
+
+        return response()->file(
+            Storage::disk('public')->path($letterArchive->generated_pdf_path),
+            ['Content-Type' => 'application/pdf']
+        );
+    }
+
+    public function downloadDocx(Request $request, LetterArchive $letterArchive)
+    {
+        $user = $request->user();
+
+        if ($user->isWarga()) {
+            abort_unless($user->resident_id && $letterArchive->resident_id === $user->resident_id, 403, 'Anda tidak memiliki akses ke arsip ini.');
+        }
+
+        abort_unless($letterArchive->generated_docx_path, 404, 'File DOCX tidak tersedia.');
+        abort_unless(Storage::disk('public')->exists($letterArchive->generated_docx_path), 404, 'File tidak ditemukan.');
+
+        return response()->download(Storage::disk('public')->path($letterArchive->generated_docx_path), basename($letterArchive->generated_docx_path));
     }
 }

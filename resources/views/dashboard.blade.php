@@ -1,46 +1,62 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
-        <div>
-            <h1 class="h4 mb-1">Dashboard Persuratan</h1>
-            <p class="text-muted mb-0">Akses Anda sebagai <strong>{{ $roleLabel }}</strong>.</p>
+    @php
+        $completionRate = $requestCount > 0 ? (int) round(($completedCount / $requestCount) * 100) : 0;
+    @endphp
+
+    <section class="dashboard-hero card card-soft mb-4">
+        <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <p class="dashboard-eyebrow mb-1">Sistem Informasi Persuratan RT/RW</p>
+                <h1 class="h3 mb-2">Dashboard Persuratan</h1>
+                <p class="text-muted mb-0">Akses Anda sebagai <strong>{{ $roleLabel }}</strong>.</p>
+            </div>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                @if ($isRw && $rtCount)
+                    <span class="dashboard-chip"><i class="bi bi-diagram-3 me-1"></i>{{ $rtCount }} RT aktif</span>
+                @endif
+                @if (! $isWarga)
+                    <span class="dashboard-chip"><i class="bi bi-patch-check me-1"></i>{{ $completionRate }}% selesai</span>
+                @endif
+                <a href="{{ route('letters.index') }}" class="btn btn-success">
+                    <i class="bi bi-envelope-plus me-1"></i>Lihat Persuratan
+                </a>
+            </div>
         </div>
-        <a href="{{ route('letters.index') }}" class="btn btn-success">
-            <i class="bi bi-envelope-plus me-1"></i>Lihat Persuratan
-        </a>
-    </div>
+    </section>
 
     @if (! $isWarga)
-        <div class="row g-3 mb-4">
+        <div class="row g-3 mb-4 dashboard-metric-row">
             <div class="col-md-4">
-                <div class="card card-soft h-100">
+                <div class="card card-soft h-100 dashboard-metric-card">
                     <div class="card-body d-flex align-items-center justify-content-between">
                         <div>
-                            <p class="text-muted mb-1">Total Warga</p>
-                            <h2 class="h3 mb-0">{{ $residentCount }}</h2>
+                            <p class="text-muted text-uppercase small mb-1">Total Warga</p>
+                            <h2 class="h3 mb-0 fw-bold">{{ $residentCount }}</h2>
                         </div>
                         <span class="stat-icon bg-success-subtle text-success"><i class="bi bi-people"></i></span>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card card-soft h-100">
+                <div class="card card-soft h-100 dashboard-metric-card">
                     <div class="card-body d-flex align-items-center justify-content-between">
                         <div>
-                            <p class="text-muted mb-1">Total Pengajuan</p>
-                            <h2 class="h3 mb-0">{{ $requestCount }}</h2>
+                            <p class="text-muted text-uppercase small mb-1">Total Pengajuan</p>
+                            <h2 class="h3 mb-0 fw-bold">{{ $requestCount }}</h2>
                         </div>
                         <span class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-envelope-paper"></i></span>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card card-soft h-100">
+                <div class="card card-soft h-100 dashboard-metric-card">
                     <div class="card-body d-flex align-items-center justify-content-between">
                         <div>
-                            <p class="text-muted mb-1">Pengajuan Selesai</p>
-                            <h2 class="h3 mb-0">{{ $completedCount }}</h2>
+                            <p class="text-muted text-uppercase small mb-1">Pengajuan Selesai</p>
+                            <h2 class="h3 mb-0 fw-bold">{{ $completedCount }}</h2>
+                            <p class="small text-muted mb-0 mt-1">{{ $completionRate }}% dari total pengajuan</p>
                         </div>
                         <span class="stat-icon bg-info-subtle text-info"><i class="bi bi-patch-check"></i></span>
                     </div>
@@ -52,33 +68,33 @@
     @if ($isWarga && $residentProfile)
         <div class="row g-3 mb-4">
             <div class="col-md-4">
-                <div class="card card-soft h-100">
+                <div class="card card-soft h-100 dashboard-metric-card">
                     <div class="card-body d-flex align-items-center justify-content-between">
                         <div>
-                            <p class="text-muted mb-1">Total Pengajuan Saya</p>
-                            <h2 class="h3 mb-0">{{ $residentStats['total_requests'] }}</h2>
+                            <p class="text-muted text-uppercase small mb-1">Total Pengajuan Saya</p>
+                            <h2 class="h3 mb-0 fw-bold">{{ $residentStats['total_requests'] }}</h2>
                         </div>
                         <span class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-envelope-paper"></i></span>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card card-soft h-100">
+                <div class="card card-soft h-100 dashboard-metric-card">
                     <div class="card-body d-flex align-items-center justify-content-between">
                         <div>
-                            <p class="text-muted mb-1">Sedang Diproses</p>
-                            <h2 class="h3 mb-0">{{ $residentStats['active_requests'] }}</h2>
+                            <p class="text-muted text-uppercase small mb-1">Sedang Diproses</p>
+                            <h2 class="h3 mb-0 fw-bold">{{ $residentStats['active_requests'] }}</h2>
                         </div>
                         <span class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-hourglass-split"></i></span>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card card-soft h-100">
+                <div class="card card-soft h-100 dashboard-metric-card">
                     <div class="card-body d-flex align-items-center justify-content-between">
                         <div>
-                            <p class="text-muted mb-1">Surat Selesai</p>
-                            <h2 class="h3 mb-0">{{ $residentStats['completed_requests'] }}</h2>
+                            <p class="text-muted text-uppercase small mb-1">Surat Selesai</p>
+                            <h2 class="h3 mb-0 fw-bold">{{ $residentStats['completed_requests'] }}</h2>
                         </div>
                         <span class="stat-icon bg-success-subtle text-success"><i class="bi bi-patch-check"></i></span>
                     </div>
@@ -89,7 +105,7 @@
         <div class="row g-3 mb-4">
             <div class="col-lg-4">
                 <div class="card card-soft h-100">
-                    <div class="card-header bg-white">
+                    <div class="card-header bg-white dashboard-section-header">
                         <strong>Ringkasan Akun</strong>
                     </div>
                     <div class="card-body d-flex flex-column gap-3">
@@ -128,13 +144,13 @@
             </div>
             <div class="col-lg-4">
                 <div class="card card-soft h-100">
-                    <div class="card-header bg-white">
+                    <div class="card-header bg-white dashboard-section-header">
                         <strong>Layanan Tersedia</strong>
                     </div>
                     <div class="card-body">
                         <div class="d-flex flex-column gap-2">
                             @foreach ($letterTypes as $label)
-                                <div class="border rounded px-3 py-2 small bg-light-subtle">{{ $label }}</div>
+                                <div class="dashboard-service-item small">{{ $label }}</div>
                             @endforeach
                         </div>
                         <div class="small text-muted mt-3">
@@ -145,7 +161,7 @@
             </div>
             <div class="col-lg-4">
                 <div class="card card-soft h-100">
-                    <div class="card-header bg-white">
+                    <div class="card-header bg-white dashboard-section-header">
                         <strong>Pengajuan Terakhir</strong>
                     </div>
                     <div class="card-body">
@@ -184,12 +200,12 @@
             <div class="row g-3 mb-4">
                 <div class="col-12">
                     <div class="card card-soft h-100">
-                        <div class="card-header bg-white">
+                        <div class="card-header bg-white dashboard-section-header">
                             <strong>Pengajuan yang Perlu Diperhatikan</strong>
                         </div>
                         <div class="card-body">
                             @foreach ($activeResidentRequests as $requestItem)
-                                <div class="border rounded p-3 {{ ! $loop->last ? 'mb-2' : '' }}">
+                                <div class="dashboard-active-item {{ ! $loop->last ? 'mb-2' : '' }}">
                                     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
                                         <div>
                                             <div class="fw-semibold">{{ $requestItem->letter_type_label }}</div>
@@ -215,14 +231,28 @@
         <div class="row g-3">
             <div class="col-lg-4">
                 <div class="card card-soft h-100">
-                    <div class="card-header bg-white">
+                    <div class="card-header bg-white dashboard-section-header">
                         <strong>Status Pengajuan</strong>
                     </div>
                     <div class="card-body d-flex flex-column gap-2">
+                        @php
+                            $totalStatuses = max(1, $requestCount);
+                        @endphp
                         @foreach ($statusCounts as $status)
-                            <div class="d-flex justify-content-between align-items-center border rounded p-2">
-                                <span>{{ $status['label'] }}</span>
-                                <span class="badge status-badge {{ $status['badge'] }}">{{ $status['value'] }}</span>
+                            @php
+                                $statusPercentage = (int) round(($status['value'] / $totalStatuses) * 100);
+                            @endphp
+                            <div class="dashboard-status-item">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span>{{ $status['label'] }}</span>
+                                    <span class="badge status-badge {{ $status['badge'] }}">{{ $status['value'] }}</span>
+                                </div>
+                                <div class="progress dashboard-progress">
+                                    <div class="progress-bar" role="progressbar" style="width: {{ $statusPercentage }}%;"
+                                        aria-valuenow="{{ $statusPercentage }}" aria-valuemin="0" aria-valuemax="100">
+                                        {{ $statusPercentage }}%
+                                    </div>
+                                </div>
                             </div>
                         @endforeach
                     </div>
@@ -230,11 +260,11 @@
             </div>
             <div class="col-lg-8">
                 <div class="card card-soft h-100">
-                    <div class="card-header bg-white">
+                    <div class="card-header bg-white dashboard-section-header">
                         <strong>Pengajuan Terbaru</strong>
                     </div>
                     <div class="table-responsive">
-                        <table class="table mb-0">
+                        <table class="table table-hover mb-0">
                             <thead>
                                 <tr>
                                     <th>Referensi</th>
@@ -266,14 +296,17 @@
 
     @if ($isRt || $isRw)
         <div class="card card-soft mt-4">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <strong>{{ $isRw ? 'Ringkasan RT' : 'Ringkasan RT Saya' }}</strong>
-                <a href="{{ route('residents.rt-overview') }}" class="btn btn-sm btn-outline-success">
+            <div class="card-header bg-white dashboard-section-header d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>{{ $isRw ? 'Ringkasan RT' : 'Ringkasan RT Saya' }}</strong>
+                    <div class="small text-muted">Distribusi warga tiap RT untuk membantu pemantauan wilayah.</div>
+                </div>
+                <a href="{{ route('residents.rt-overview') }}" class="btn btn-sm btn-outline-success flex-shrink-0">
                     {{ $isRw ? 'Lihat Semua RT' : 'Lihat Warga RT '.$managedRt }}
                 </a>
             </div>
             <div class="table-responsive">
-                <table class="table mb-0">
+                <table class="table table-hover mb-0">
                     <thead>
                         <tr>
                             <th>RT</th>
@@ -309,7 +342,7 @@
         <div class="row g-3 mt-1">
             <div class="col-xl-5">
                 <div class="card card-soft h-100">
-                    <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div class="card-header bg-white dashboard-section-header d-flex flex-wrap justify-content-between align-items-center gap-2">
                         <div>
                             <strong>Komposisi Warga RT {{ $selectedRt }}</strong>
                             <div class="small text-muted">Perbandingan total warga, warga asli, dan pendatang saat ini.</div>
@@ -342,7 +375,7 @@
             </div>
             <div class="col-xl-7">
                 <div class="card card-soft h-100">
-                    <div class="card-header bg-white">
+                    <div class="card-header bg-white dashboard-section-header">
                         <strong>Tren Pendaftaran Warga per Tahun</strong>
                         <div class="small text-muted">Menggunakan tahun pembuatan data warga pada RT {{ $selectedRt }}.</div>
                     </div>
@@ -398,7 +431,7 @@
                             datasets: [{
                                 data: values,
                                 backgroundColor: colors,
-                                borderRadius: 10,
+                                borderRadius: 0,
                                 borderSkipped: false,
                                 barThickness: 54,
                                 maxBarThickness: 62,
@@ -470,7 +503,7 @@
                                     label: 'Warga Asli',
                                     data: yearlyMetrics.map((item) => item.warga_asli),
                                     backgroundColor: '#1f8b4c',
-                                    borderRadius: 8,
+                                    borderRadius: 0,
                                     borderSkipped: false,
                                     categoryPercentage: 0.8,
                                     barPercentage: 0.9,
@@ -480,7 +513,7 @@
                                     label: 'Pendatang',
                                     data: yearlyMetrics.map((item) => item.pendatang),
                                     backgroundColor: '#2563eb',
-                                    borderRadius: 8,
+                                    borderRadius: 0,
                                     borderSkipped: false,
                                     categoryPercentage: 0.8,
                                     barPercentage: 0.9,
