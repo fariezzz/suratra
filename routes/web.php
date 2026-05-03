@@ -25,7 +25,10 @@ Route::middleware('auth')->group(function (): void {
     Route::middleware('role:pengurus_rt,pengurus_rw')->group(function (): void {
         Route::prefix('warga')->name('residents.')->group(function (): void {
             Route::get('/rt-overview', [ResidentController::class, 'rtOverview'])->name('rt-overview');
-            Route::get('/{rt}', [ResidentController::class, 'rtResidents'])->name('rt-residents');
+            Route::get('/{rt}', [ResidentController::class, 'rtResidents'])
+                ->where('rt', '[0-9]{3}')
+                ->name('rt-residents');
+            Route::get('/{resident}/detail', [ResidentController::class, 'show'])->name('show');
         });
         
         Route::resource('warga', ResidentController::class)

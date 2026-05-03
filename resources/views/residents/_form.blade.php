@@ -52,12 +52,13 @@
     </div>
     <div class="col-md-2">
         <label class="form-label" for="rt">RT</label>
-        <input type="text" class="form-control" id="rt" name="rt" value="{{ old('rt', $residentModel?->rt) }}" maxlength="3" required>
+        <select class="form-select" id="rt" name="rt" required>
+            <option value="">Pilih RT</option>
+            <option value="001" @selected(old('rt', $residentModel?->rt) === '001')>001</option>
+            <option value="002" @selected(old('rt', $residentModel?->rt) === '002')>002</option>
+        </select>
     </div>
-    <div class="col-md-2">
-        <label class="form-label" for="rw">RW</label>
-        <input type="text" class="form-control" id="rw" name="rw" value="{{ old('rw', $residentModel?->rw) }}" maxlength="3" required>
-    </div>
+    <input type="hidden" name="rw" value="009">
     <div class="col-md-2">
         <label class="form-label" for="phone">Nomor HP</label>
         <input type="text" class="form-control" id="phone" name="phone" value="{{ old('phone', $residentModel?->phone) }}">

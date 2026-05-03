@@ -167,6 +167,14 @@ class ResidentController extends Controller
         return view('residents.edit', compact('resident'));
     }
 
+    public function show(Request $request, Resident $resident): View
+    {
+        $this->authorizeResidentAccess($request->user(), $resident);
+        $resident->load('user');
+
+        return view('residents.show', compact('resident'));
+    }
+
     public function update(Request $request, Resident $resident): RedirectResponse
     {
         $this->authorizeResidentAccess($request->user(), $resident);

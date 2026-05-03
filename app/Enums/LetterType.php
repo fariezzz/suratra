@@ -13,7 +13,7 @@ enum LetterType: string
     {
         return match ($this) {
             self::GENERAL => 'Surat Pengantar Umum',
-            self::DOMICILE => 'Surat Pengantar Domisili',
+            self::DOMICILE => 'Surat Keterangan Domisili',
             self::SKCK => 'Surat Pengantar SKCK',
             self::BUSINESS => 'Surat Keterangan Usaha',
         };

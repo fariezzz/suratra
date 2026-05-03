@@ -7,6 +7,7 @@ use App\Enums\LetterType;
 use App\Models\LetterArchive;
 use App\Models\LetterRequest;
 use App\Services\LetterDocumentService;
+use App\Services\WhatsAppService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,7 +41,7 @@ class LetterRequestController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, WhatsAppService $whatsAppService): RedirectResponse
     {
         $user = $request->user()->loadMissing('resident');
         abort_unless($user->isWarga(), 403);
@@ -79,7 +80,7 @@ class LetterRequestController extends Controller
             ];
         }
 
-        LetterRequest::query()->create([
+        $letterRequest = LetterRequest::query()->create([
             'resident_id' => $user->resident_id,
             'reference_number' => $this->generateReferenceNumber(),
             'letter_type' => $validated['letter_type'],
@@ -88,10 +89,16 @@ class LetterRequestController extends Controller
             'documents' => $storedDocuments,
         ]);
 
+        try {
+            $whatsAppService->notifyRTNewSubmission($letterRequest);
+        } catch (\Throwable $e) {
+            Log::warning('Notifikasi WA RT pengajuan baru gagal: '.$e->getMessage());
+        }
+
         return to_route('letters.index')->with('success', 'Pengajuan surat berhasil dibuat.');
     }
 
-    public function rtDecision(Request $request, LetterRequest $letterRequest): RedirectResponse
+    public function rtDecision(Request $request, LetterRequest $letterRequest, WhatsAppService $whatsAppService): RedirectResponse
     {
         abort_unless($request->user()->isRt(), 403);
 
@@ -117,6 +124,17 @@ class LetterRequestController extends Controller
             'generated_content' => null,
         ]);
 
+        try {
+            if ($isApproved) {
+                $whatsAppService->notifyWargaDiterimaRT($letterRequest);
+                $whatsAppService->notifyRWNewSubmission($letterRequest);
+            } else {
+                $whatsAppService->notifyWargaDitolakRT($letterRequest, $validated['notes'] ?? '-');
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Notifikasi WA keputusan RT gagal: '.$e->getMessage());
+        }
+
         $message = $isApproved
             ? 'Pengajuan disetujui RT dan diteruskan ke RW.'
             : 'Pengajuan ditolak oleh RT.';
@@ -124,7 +142,7 @@ class LetterRequestController extends Controller
         return to_route('letters.index')->with('success', $message);
     }
 
-    public function rwDecision(Request $request, LetterRequest $letterRequest): RedirectResponse
+    public function rwDecision(Request $request, LetterRequest $letterRequest, WhatsAppService $whatsAppService): RedirectResponse
     {
         abort_unless($request->user()->isRw(), 403);
 
@@ -152,7 +170,7 @@ class LetterRequestController extends Controller
                     $docxPublicPath = $documentService->generateDocx($letterRequest);
                     $letterRequest->generated_docx_path = $docxPublicPath;
 
-                    $pdfPath = $documentService->generatePdfFromDocx($docxPublicPath, $letterRequest->id);
+                    $pdfPath = $documentService->generatePdfFromDocx($docxPublicPath);
                     $letterRequest->generated_pdf_path = $pdfPath;
 
                     $letterRequest->generated_content = '';
@@ -163,6 +181,7 @@ class LetterRequestController extends Controller
                         [
                             'resident_id' => $letterRequest->resident_id,
                             'archived_by' => $request->user()->id,
+                            'archive_number' => $this->generateArchiveNumber(),
                             'reference_number' => $letterRequest->reference_number,
                             'letter_number' => $letterRequest->letter_number,
                             'letter_type' => $letterRequest->letter_type,
@@ -179,6 +198,13 @@ class LetterRequestController extends Controller
                         ]
                     );
                 });
+
+                try {
+                    $letterRequest->refresh();
+                    $whatsAppService->notifyWargaDiterimaRW($letterRequest, (string) $letterRequest->generated_pdf_path);
+                } catch (\Throwable $e) {
+                    Log::warning('Notifikasi WA keputusan RW diterima gagal: '.$e->getMessage());
+                }
             } catch (\Throwable $e) {
                 Log::error('RW approval transaction failed: '.$e->getMessage());
 
@@ -194,6 +220,12 @@ class LetterRequestController extends Controller
                 'generated_pdf_path' => null,
                 'generated_docx_path' => null,
             ]);
+
+            try {
+                $whatsAppService->notifyWargaDitolakRW($letterRequest, $validated['notes'] ?? '-');
+            } catch (\Throwable $e) {
+                Log::warning('Notifikasi WA keputusan RW ditolak gagal: '.$e->getMessage());
+            }
         }
 
         $message = $isApproved
@@ -308,6 +340,15 @@ class LetterRequestController extends Controller
         do {
             $candidate = '470/'.now()->format('m').'/RT-RW/'.str_pad((string) random_int(1, 999), 3, '0', STR_PAD_LEFT).'/'.now()->format('Y');
         } while (LetterRequest::query()->where('letter_number', $candidate)->exists());
+
+        return $candidate;
+    }
+
+    private function generateArchiveNumber(): string
+    {
+        do {
+            $candidate = 'ARS-'.now()->format('Ymd').'-'.str_pad((string) random_int(1, 9999), 4, '0', STR_PAD_LEFT);
+        } while (LetterArchive::query()->where('archive_number', $candidate)->exists());
 
         return $candidate;
     }

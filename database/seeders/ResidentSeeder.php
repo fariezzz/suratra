@@ -195,6 +195,7 @@ class ResidentSeeder extends Seeder
                     'status_kawin' => $resident['status_kawin'] ?? 'Belum Kawin',
                     'rt' => $rtOptions[array_rand($rtOptions)],
                     'rw' => '009',
+                    'phone' => '082116375827',
                     'created_at' => $now,
                     'updated_at' => $now,
                 ];

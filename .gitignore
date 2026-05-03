@@ -6,6 +6,8 @@
 /storage/*.key
 /storage/pail
 /vendor
+/whatsapp-service/node_modules
+/whatsapp-service/auth_info_baileys
 .env
 .env.backup
 .env.production

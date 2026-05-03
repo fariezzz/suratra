@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\LetterType;
 use App\Models\LetterRequest;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use PhpOffice\PhpWord\TemplateProcessor;
 use RuntimeException;
 
@@ -21,17 +23,18 @@ class LetterDocumentService
         }
 
         $values = $this->templateValues($letterRequest);
+        $baseFilename = $this->buildGeneratedFilenameBase($letterRequest);
 
         $templateProcessor = new TemplateProcessor($templatePath);
         foreach ($values as $placeholder => $value) {
             $templateProcessor->setValue($placeholder, $value ?? '');
         }
 
-        $tempDocx = storage_path('app/temp/filled-' . $letterRequest->id . '-' . time() . '.docx');
+        $tempDocx = storage_path('app/temp/filled-' . $baseFilename . '.docx');
         @mkdir(dirname($tempDocx), 0755, true);
         $templateProcessor->saveAs($tempDocx);
 
-        $filename = 'surat-' . $letterRequest->id . '-' . time() . '.docx';
+        $filename = $baseFilename . '.docx';
         $publicPath = 'generated-letters/' . $filename;
 
         Storage::disk('public')->put($publicPath, file_get_contents($tempDocx));
@@ -41,7 +44,7 @@ class LetterDocumentService
         return $publicPath;
     }
 
-    public function generatePdfFromDocx(string $publicDocxPath, int $letterRequestId): string
+    public function generatePdfFromDocx(string $publicDocxPath): string
     {
         $fullPath = Storage::disk('public')->path($publicDocxPath);
         if (! file_exists($fullPath)) {
@@ -65,7 +68,7 @@ class LetterDocumentService
             $task->addFile($fullPath);
             $task->execute();
 
-            $downloadDir = storage_path('app/temp/ilovepdf-' . $letterRequestId . '-' . time());
+            $downloadDir = storage_path('app/temp/ilovepdf-' . pathinfo($publicDocxPath, PATHINFO_FILENAME));
             @mkdir($downloadDir, 0755, true);
             $task->download($downloadDir);
 
@@ -75,7 +78,7 @@ class LetterDocumentService
             }
 
             $convertedPdf = $files[0];
-            $filename = 'surat-' . $letterRequestId . '-' . time() . '.pdf';
+            $filename = pathinfo($publicDocxPath, PATHINFO_FILENAME) . '.pdf';
             $path = 'generated-letters/' . $filename;
 
             Storage::disk('public')->put($path, file_get_contents($convertedPdf));
@@ -134,13 +137,42 @@ class LetterDocumentService
     private function resolveTemplatePath(string $letterType): string
     {
         $templates = [
-            'surat_pengantar_umum' => 'letter-templates/surat_pengantar_umum.docx',
-            'surat_pengantar_domisili' => 'letter-templates/surat_pengantar_domisili.docx',
-            'surat_pengantar_skck' => 'letter-templates/surat_pengantar_skck.docx',
-            'surat_keterangan_usaha' => 'letter-templates/surat_pengantar_usaha.docx',
+            LetterType::GENERAL->value => ['letter-templates/surat_pengantar_umum.docx'],
+            LetterType::DOMICILE->value => ['letter-templates/surat_keterangan_domisili.docx'],
+            LetterType::SKCK->value => ['letter-templates/surat_pengantar_skck.docx'],
+            LetterType::BUSINESS->value => ['letter-templates/surat_keterangan_usaha.docx'],
         ];
-        
-        $filename = $templates[$letterType] ?? 'letter-templates/surat_pengantar_umum.docx';
-        return storage_path('app/' . $filename);
+
+        $candidates = $templates[$letterType] ?? $templates['surat_pengantar_umum'];
+
+        foreach ($candidates as $candidate) {
+            $path = storage_path('app/' . $candidate);
+
+            if (file_exists($path)) {
+                return $path;
+            }
+        }
+
+        return storage_path('app/' . $candidates[0]);
+    }
+
+    private function buildGeneratedFilenameBase(LetterRequest $letterRequest): string
+    {
+        $code = $this->letterCode($letterRequest->letter_type);
+        $residentName = Str::upper(Str::slug($letterRequest->resident->name ?? 'warga', '_'));
+        $date = Carbon::now()->format('Ymd');
+
+        return implode('_', array_filter([$code, $residentName, $date]));
+    }
+
+    private function letterCode(string $letterType): string
+    {
+        return match ($letterType) {
+            LetterType::DOMICILE->value => 'SKD',
+            LetterType::SKCK->value => 'SKCK',
+            LetterType::GENERAL->value => 'SPU',
+            LetterType::BUSINESS->value => 'SKU',
+            default => 'SURAT',
+        };
     }
 }

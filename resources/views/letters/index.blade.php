@@ -164,7 +164,7 @@ use App\Enums\LetterRequestStatus;
                                     <a href="{{ route('letters.show', $requestItem) }}" class="btn btn-sm btn-outline-primary">
                                         <i class="bi bi-file-earmark-text me-1"></i>Lihat Surat
                                     </a>
-                                    @else
+                                    @elseif (! in_array($requestItem->status, [LetterRequestStatus::REJECTED_RT->value, LetterRequestStatus::REJECTED_RW->value], true))
                                     <span class="text-muted small">Menunggu proses</span>
                                     @endif
                                 </td>
@@ -312,16 +312,80 @@ use App\Enums\LetterRequestStatus;
             input.name = `documents[${key}]`;
             input.accept = '.pdf,.jpg,.jpeg,.png';
             input.required = true;
+
+            const statusInfo = document.createElement('div');
+            statusInfo.className = 'small mt-2 d-none';
+
+            function formatFileSize(sizeInBytes) {
+                if (!sizeInBytes) {
+                    return '0 KB';
+                }
+
+                const sizeInKb = sizeInBytes / 1024;
+                if (sizeInKb < 1024) {
+                    return `${Math.ceil(sizeInKb)} KB`;
+                }
+
+                return `${(sizeInKb / 1024).toFixed(2)} MB`;
+            }
+
+            function setUploadedState(file) {
+                if (!file) {
+                    statusInfo.classList.add('d-none');
+                    statusInfo.classList.remove('text-success');
+                    statusInfo.textContent = '';
+
+                    dropZone.classList.remove('border-success', 'bg-success', 'bg-opacity-10');
+                    dropZone.innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Drag file ke sini atau klik untuk pilih';
+                    return;
+                }
+
+                dropZone.classList.remove('bg-warning', 'bg-opacity-10');
+                dropZone.classList.add('border-success', 'bg-success', 'bg-opacity-10');
+                dropZone.innerHTML = '<i class="bi bi-check-circle me-1"></i>File berhasil terinput';
+
+                statusInfo.classList.remove('d-none');
+                statusInfo.classList.add('text-success');
+                statusInfo.textContent = `Terpilih: ${file.name} (${formatFileSize(file.size)})`;
+            }
+
             input.addEventListener('change', function () {
+                const selectedFile = this.files[0] ?? null;
+                setUploadedState(selectedFile);
                 previewSelectedFile(this);
             });
 
             const hint = document.createElement('small');
             hint.className = 'text-muted';
-            hint.textContent = 'Format: PDF/JPG/PNG (maksimal 2MB)';
+            hint.textContent = 'Format: PDF/JPG/PNG (maksimal 2MB) - Bisa drag & drop';
+
+            const dropZone = document.createElement('div');
+            dropZone.className = 'border border-dashed rounded p-3 text-center mt-2 bg-light';
+            dropZone.style.cursor = 'pointer';
+            dropZone.innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Drag file ke sini atau klik untuk pilih';
+            dropZone.addEventListener('click', () => input.click());
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('bg-warning', 'bg-opacity-10');
+            });
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('bg-warning', 'bg-opacity-10');
+            });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('bg-warning', 'bg-opacity-10');
+                if (e.dataTransfer.files.length > 0) {
+                    input.files = e.dataTransfer.files;
+                    const event = new Event('change', { bubbles: true });
+                    input.dispatchEvent(event);
+                }
+            });
 
             wrapper.appendChild(labelEl);
+            wrapper.appendChild(dropZone);
             wrapper.appendChild(input);
+            input.style.display = 'none';
+            wrapper.appendChild(statusInfo);
             wrapper.appendChild(hint);
 
             if (oldFiles.includes(key)) {

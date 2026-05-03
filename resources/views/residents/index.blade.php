@@ -100,15 +100,18 @@
                             </td>
                             <td class="resident-email">{{ $resident->user?->email ?? '-' }}</td>
                             <td class="text-end">
-                                <div class="resident-actions d-inline-flex gap-2">
-                                    <a href="{{ route('residents.edit', $resident) }}" class="btn btn-sm btn-outline-primary">
+                                <div class="resident-actions d-inline-flex flex-column gap-2 align-items-end" style="width: 70px;">
+                                    <a href="{{ route('residents.show', $resident) }}" class="btn btn-sm btn-outline-secondary w-100 justify-content-center">
+                                        <i class="bi bi-info-circle me-1"></i>Detail
+                                    </a>
+                                    <a href="{{ route('residents.edit', $resident) }}" class="btn btn-sm btn-outline-primary w-100 justify-content-center">
                                         <i class="bi bi-pencil-square me-1"></i>Edit
                                     </a>
-                                    <form action="{{ route('residents.destroy', $resident) }}" method="POST" class="d-inline"
+                                    <form action="{{ route('residents.destroy', $resident) }}" method="POST" class="d-inline w-100"
                                         onsubmit="return confirm('Yakin ingin menghapus data warga ini?')">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger w-100 justify-content-center">
                                             <i class="bi bi-trash me-1"></i>Hapus
                                         </button>
                                     </form>

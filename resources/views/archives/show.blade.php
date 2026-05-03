@@ -36,7 +36,7 @@
                 </div>
                 <div class="col-md-3">
                     <div class="text-muted">Tanggal Arsip</div>
-                    <strong>{{ $letterArchive->archived_at?->format('d M Y H:i') ?: '-' }}</strong>
+                    <strong>{{ $letterArchive->archived_at?->translatedFormat('d F Y H:i') ?: '-' }}</strong>
                 </div>
                 <div class="col-md-6">
                     <div class="text-muted">Pemohon</div>

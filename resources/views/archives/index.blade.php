@@ -76,7 +76,7 @@
                                 <small class="text-muted">NIK {{ $archive->resident_nik }}</small>
                             </td>
                             <td>{{ $archive->letter_type_label }}</td>
-                            <td>{{ $archive->archived_at?->format('d M Y H:i') ?: '-' }}</td>
+                            <td>{{ $archive->archived_at?->translatedFormat('d F Y H:i') ?: '-' }}</td>
                             <td>
                                 <a href="{{ route('archives.show', $archive) }}" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-file-earmark-text me-1"></i>Lihat Arsip
