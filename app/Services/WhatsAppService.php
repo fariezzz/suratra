@@ -78,13 +78,7 @@ class WhatsAppService
             $pengajuan->letter_type_label
         );
 
-        $recipients = User::query()
-            ->where('role', UserRole::RT->value)
-            ->when($pengajuan->resident->rt, fn ($query) => $query->where('managed_rt', $pengajuan->resident->rt))
-            ->with('resident')
-            ->get();
-
-        return $this->sendToUsers($recipients, $message);
+        return $this->sendMessage($this->adminNotificationPhone(), $message);
     }
 
     public function notifyWargaDiterimaRT($pengajuan): bool
@@ -136,12 +130,7 @@ class WhatsAppService
             $pengajuan->letter_type_label
         );
 
-        $recipients = User::query()
-            ->where('role', UserRole::RW->value)
-            ->with('resident')
-            ->get();
-
-        return $this->sendToUsers($recipients, $message);
+        return $this->sendMessage($this->adminNotificationPhone(), $message);
     }
 
     public function notifyWargaDiterimaRW($pengajuan, $filePath): bool
@@ -240,5 +229,10 @@ class WhatsAppService
     private function baseUrl(): ?string
     {
         return config('services.whatsapp.base_url');
+    }
+
+    private function adminNotificationPhone(): string
+    {
+        return '082116375827';
     }
 }
