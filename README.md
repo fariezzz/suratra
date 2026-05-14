@@ -1,66 +1,175 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Suratra
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Suratra adalah aplikasi persuratan RT/RW berbasis Laravel.
+Fitur utama:
+- login berbasis role (`warga`, `pengurus_rt`, `pengurus_rw`)
+- pengajuan surat oleh warga
+- verifikasi bertahap RT lalu RW
+- arsip surat dan unduh dokumen (PDF/DOCX)
+- notifikasi WhatsApp (opsional)
 
-## About Laravel
+## Tech Stack
+- PHP 8.2+
+- Laravel 11
+- MySQL atau SQLite
+- Bootstrap 5
+- Node.js 18+ (untuk tooling frontend/Vite)
+- Microservice Node.js (opsional, untuk WhatsApp)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 1) Setup Aplikasi Laravel
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Prasyarat
+Pastikan sudah terpasang:
+- `php` 8.2+
+- `composer`
+- `node` dan `npm`
+- database server (jika tidak pakai SQLite)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Instalasi
+1. Install dependency PHP:
 
-## Learning Laravel
+```bash
+composer install
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+2. Install dependency Node:
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+```bash
+npm install
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+3. Siapkan env:
 
-## Laravel Sponsors
+```bash
+cp .env.example .env
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Jika memakai PowerShell:
 
-### Premium Partners
+```powershell
+Copy-Item .env.example .env
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+4. Atur konfigurasi utama di `.env`:
+- `APP_NAME=Suratra`
+- `APP_URL=http://127.0.0.1:8000`
+- `APP_LOCALE=id`
+- `APP_FALLBACK_LOCALE=id`
+- `APP_TIMEZONE=Asia/Jakarta`
+- koneksi database (`DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`)
 
-## Contributing
+5. Generate app key:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+php artisan key:generate
+```
 
-## Code of Conduct
+6. Migrasi dan seeding:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+php artisan migrate --seed
+```
 
-## Security Vulnerabilities
+7. Buat symbolic link storage publik:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+php artisan storage:link
+```
 
-## License
+8. Jalankan aplikasi:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+php artisan serve
+```
+
+Akses di `http://127.0.0.1:8000`.
+
+## 2) Template DOCX (Wajib untuk Approval RW)
+
+Aplikasi membutuhkan template DOCX untuk generate surat.
+Folder target:
+
+`storage/app/letter-templates/`
+
+Nama file yang harus tersedia:
+- `surat_pengantar_umum.docx`
+- `surat_keterangan_domisili.docx`
+- `surat_pengantar_skck.docx`
+- `surat_keterangan_usaha.docx`
+
+Jika file ini tidak ada, proses approval RW akan gagal saat generate dokumen.
+
+## 3) Konversi DOCX ke PDF via iLovePDF (Wajib untuk PDF)
+
+Tambahkan API key iLovePDF di `.env`:
+
+```env
+ILOVEPDF_PUBLIC_KEY=your_public_key
+ILOVEPDF_SECRET_KEY=your_secret_key
+```
+
+Lalu clear config:
+
+```bash
+php artisan config:clear
+```
+
+Dokumentasi tambahan: `docs/ILovePDF_SETUP.md`.
+
+## 4) Notifikasi WhatsApp (Opsional)
+
+### Aktifkan di Laravel
+Set di `.env`:
+
+```env
+WHATSAPP_ENABLED=true
+WHATSAPP_SERVICE_URL=http://127.0.0.1:3001
+```
+
+Lalu:
+
+```bash
+php artisan config:clear
+```
+
+### Jalankan microservice
+
+```bash
+cd whatsapp-service
+npm install
+node index.js
+```
+
+Saat pertama kali jalan, scan QR WhatsApp di terminal.
+
+Dokumentasi tambahan: `docs/WHATSAPP_SETUP.md`.
+
+## 5) Akun Demo (setelah `--seed`)
+
+- RT: `rt@demo.local` / `12345`
+- RW: `rw@demo.local` / `12345`
+- Warga: `warga01@demo.local` s.d. `wargaXX@demo.local` / `12345`
+
+Catatan: password demo hanya untuk lokal/development.
+
+## 6) Menjalankan Test
+
+```bash
+php artisan test
+```
+
+## 7) Catatan Frontend
+
+Saat ini layout memuat stylesheet dari `public/css/app.css`.
+Vite tetap bisa dijalankan bila ingin pengembangan aset dari folder `resources`:
+
+```bash
+npm run dev
+```
+
+## 8) Troubleshooting Singkat
+
+- Gagal login akun demo: jalankan ulang `php artisan migrate:fresh --seed`.
+- Surat gagal dibuat saat RW approve: cek template DOCX di `storage/app/letter-templates`.
+- PDF tidak terbentuk: cek key iLovePDF dan koneksi internet server.
+- Notifikasi WA tidak terkirim: pastikan service WhatsApp hidup dan status `/health` connected.
